@@ -239,7 +239,7 @@ Set dua repository secrets (**Settings → Secrets and variables → Actions**):
 | `SUPABASE_URL`       | `https://REF-PROJECTMU.supabase.co`         |
 | `SUPABASE_ANON_KEY`  | kunci anon public kamu                      |
 
-> Workflow memanggil RPC `get_link_by_code` dengan kode dummy, bukan query tabel `links` langsung. Akses anonim langsung ke tabel `links` sengaja dicabut demi keamanan (anti-enumerasi), jadi query tabel langsung akan gagal — dan jika berhasil justru merusak model keamanan.
+> Workflow meng-query `profiles` (`select=id&limit=1`) dengan anon key. RLS `profiles` tidak punya policy untuk role `anon`, jadi query selalu mengembalikan `[]` (HTTP 200) tanpa membocorkan data apa pun — sinyal aktivitas yang aman. Anon key tidak bisa membaca `links` langsung (dicabut untuk anti-enumerasi), jadi query tabel di sana akan gagal.
 
 Jalankan sekali secara manual dari tab **Actions** untuk verifikasi (log harus menampilkan `Supabase pinged successfully.`).
 

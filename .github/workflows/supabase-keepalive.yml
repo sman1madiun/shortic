@@ -13,19 +13,17 @@ jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST endpoint
+- name: Ping Supabase REST endpoint
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          # Use the get_link_by_code RPC (EXECUTE granted to anon, SECURITY DEFINER).
-          # A direct query on the links table is not used because anon access
-          # to the table was revoked to prevent enumeration.
-          curl -fsS -X POST \
+          # Query profiles memakai anon key. RLS profiles tidak punya policy
+          # untuk role anon, jadi hasilnya selalu [] (HTTP 200) tanpa
+          # membocorkan data apa pun — cukup sebagai sinyal aktivitas.
+          curl -fsS \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            -H "Content-Type: application/json" \
-            -d '{"p_code":"__keepalive__"}' \
-            "${SUPABASE_URL}/rest/v1/rpc/get_link_by_code" \
+            "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
             -o /dev/null
           echo "Supabase pinged successfully."

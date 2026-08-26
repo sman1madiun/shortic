@@ -239,7 +239,7 @@ Set two repository secrets (**Settings → Secrets and variables → Actions**):
 | `SUPABASE_URL`        | `https://YOUR-PROJECT-REF.supabase.co`         |
 | `SUPABASE_ANON_KEY`   | your anon public key                           |
 
-> The workflow calls the `get_link_by_code` RPC with a dummy code rather than querying the `links` table directly. Anonymous direct access to `links` is deliberately revoked for security (anti-enumeration), so a direct table query would fail — and would defeat the security model if it worked.
+> The workflow queries `profiles` (`select=id&limit=1`) with the anon key. RLS has no policy for the `anon` role on `profiles`, so the query always returns `[]` (HTTP 200) without exposing any data — a safe activity signal. The anon key cannot read `links` directly (revoked for anti-enumeration), so a table query there would fail.
 
 Run it manually once from the **Actions** tab to verify (the log should show `Supabase pinged successfully.`).
 
