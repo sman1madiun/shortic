@@ -13,7 +13,7 @@ jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
-- name: Ping Supabase REST endpoint
+      - name: Ping Supabase REST endpoint
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
