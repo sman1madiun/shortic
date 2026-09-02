@@ -2,8 +2,9 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Daily 00:00 UTC, enough to prevent pausing due to 7 days of inactivity.
-    - cron: "0 0 * * *"
+    # Twice weekly (Sun & Wed) at 13:17 UTC — well within the 7-day pause
+    # threshold. Odd-minute avoids peak-hour GitHub Actions queuing.
+    - cron: "17 13 * * 0,3"
   workflow_dispatch:
 
 permissions:
@@ -21,9 +22,12 @@ jobs:
           # Query profiles memakai anon key. RLS profiles tidak punya policy
           # untuk role anon, jadi hasilnya selalu [] (HTTP 200) tanpa
           # membocorkan data apa pun — cukup sebagai sinyal aktivitas.
+          # Header Prefer: count=exact memaksa PostgREST menjalankan COUNT(*)
+          # paralel → dua query per HTTP call, lebih banyak aktivitas tercatat.
           curl -fsS \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Prefer: count=exact" \
             "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" \
             -o /dev/null
           echo "Supabase pinged successfully."

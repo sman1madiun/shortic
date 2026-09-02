@@ -33,7 +33,7 @@
   - UI **flat responsif** dengan toggle **mode gelap**.
 - **Row-level security** — user hanya mengelola link miliknya; admin mengelola semuanya.
 - **Anti-enumerasi** — klien anonim hanya bisa lookup link lewat RPC `SECURITY DEFINER` yang dibatasi, tidak pernah akses tabel langsung.
-- **Keep-alive cron** — workflow GitHub Actions mem-ping Supabase setiap hari agar project free-tier tidak ter-pause karena inaktivitas.
+- **Keep-alive cron** — workflow GitHub Actions mem-ping Supabase dua kali seminggu (Min & Rab) agar project free-tier tidak ter-pause karena inaktivitas.
 
 ## Arsitektur
 
@@ -72,7 +72,7 @@
 - **Frontend:** vanilla HTML/CSS/JS (tanpa framework), [supabase-js v2](https://github.com/supabase/supabase-js), [Materialize CSS](https://materializecss.com/) (di-override menjadi flat), [qrcodejs](https://github.com/davidshimjs/qrcodejs) untuk QR.
 - **Backend / data:** [Supabase](https://supabase.com) (Postgres + Auth + RLS).
 - **Hosting:** Cloudflare Pages (dua project).
-- **CI:** GitHub Actions (keep-alive harian).
+- **CI:** GitHub Actions (keep-alive dua kali seminggu).
 
 ## Struktur Project
 
@@ -230,7 +230,7 @@ Set di **Settings → Environment variables** tiap project:
 
 ## GitHub Actions — Supabase Keep-Alive
 
-Workflow di `.github/workflows/supabase-keepalive.yml` mem-ping Supabase sekali sehari agar project free-tier tidak ter-pause setelah 7 hari inaktivitas.
+Workflow di `.github/workflows/supabase-keepalive.yml` mem-ping Supabase dua kali seminggu (Minggu & Rabu pukul 13:17 UTC) agar project free-tier tidak ter-pause setelah 7 hari inaktivitas.
 
 Set dua repository secrets (**Settings → Secrets and variables → Actions**):
 
@@ -239,7 +239,7 @@ Set dua repository secrets (**Settings → Secrets and variables → Actions**):
 | `SUPABASE_URL`       | `https://REF-PROJECTMU.supabase.co`         |
 | `SUPABASE_ANON_KEY`  | kunci anon public kamu                      |
 
-> Workflow meng-query `profiles` (`select=id&limit=1`) dengan anon key. RLS `profiles` tidak punya policy untuk role `anon`, jadi query selalu mengembalikan `[]` (HTTP 200) tanpa membocorkan data apa pun — sinyal aktivitas yang aman. Anon key tidak bisa membaca `links` langsung (dicabut untuk anti-enumerasi), jadi query tabel di sana akan gagal.
+> Workflow meng-query `profiles` (`select=id&limit=1`) dengan anon key dan header `Prefer: count=exact`. RLS `profiles` tidak punya policy untuk role `anon`, jadi query selalu mengembalikan `[]` (HTTP 200) tanpa membocorkan data apa pun — sinyal aktivitas yang aman. Header `count=exact` memaksa PostgREST menjalankan `SELECT count(*)` paralel, menggandakan aktivitas database per panggilan.
 
 Jalankan sekali secara manual dari tab **Actions** untuk verifikasi (log harus menampilkan `Supabase pinged successfully.`).
 
@@ -286,7 +286,7 @@ Supaya `og:image` / `og:url` absolut (diwajibkan sebagian scraper), set environm
 ## Batasan & Roadmap
 
 - Redirect terjadi client-side, jadi search engine / bot yang tidak menjalankan JavaScript tidak akan mengikuti redirect.
-- Limit tier gratis Supabase berlaku (DB 500 MB, project pause setelah 7 hari inaktivitas — dimitigasi oleh cron keep-alive).
+- Limit tier gratis Supabase berlaku (DB 500 MB, project pause setelah 7 hari inaktivitas — dimitigasi oleh cron keep-alive 2× seminggu).
 - Ide pengembangan: dashboard analitik klik, edit slug kustom, tema kustom, dukungan PWA.
 
 ## Lisensi

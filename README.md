@@ -33,7 +33,7 @@
   - Responsive **flat UI** with **dark mode** toggle.
 - **Row-level security** — users can only manage their own links; admins manage everything.
 - **Anti-enumeration** — anonymous clients can only look up links through a constrained `SECURITY DEFINER` RPC, never direct table access.
-- **Keep-alive cron** — a GitHub Actions workflow pings Supabase daily so a free-tier project is never paused for inactivity.
+- **Keep-alive cron** — a GitHub Actions workflow pings Supabase twice a week (Sun & Wed) so a free-tier project is never paused for inactivity.
 
 ## Architecture
 
@@ -58,7 +58,7 @@
                         └─────────────────────────────┘
 
    .github/workflows/supabase-keepalive.yml
-     ──▶ pings Supabase daily to prevent free-tier pause
+     ──▶ pings Supabase twice weekly to prevent free-tier pause
 ```
 
 **Security model**
@@ -72,7 +72,7 @@
 - **Frontend:** vanilla HTML/CSS/JS (no framework), [supabase-js v2](https://github.com/supabase/supabase-js), [Materialize CSS](https://materializecss.com/) (overridden to a flat design), [qrcodejs](https://github.com/davidshimjs/qrcodejs) for QR rendering.
 - **Backend / data:** [Supabase](https://supabase.com) (Postgres + Auth + RLS).
 - **Hosting:** Cloudflare Pages (two projects).
-- **CI:** GitHub Actions (daily keep-alive).
+- **CI:** GitHub Actions (twice-weekly keep-alive).
 
 ## Project Structure
 
@@ -106,7 +106,7 @@ shortic/
 │   └── logo.svg                 # the shortic logo (used in this README)
 │
 └── .github/workflows/
-    └── supabase-keepalive.yml   # daily ping to prevent free-tier pause
+    └── supabase-keepalive.yml   # twice-weekly ping to prevent free-tier pause
 ```
 
 ## Prerequisites
@@ -230,7 +230,7 @@ Set these in **Settings → Environment variables** of each project:
 
 ## GitHub Actions — Supabase Keep-Alive
 
-The workflow in `.github/workflows/supabase-keepalive.yml` pings Supabase once a day to prevent a free-tier project from being paused after 7 days of inactivity.
+The workflow in `.github/workflows/supabase-keepalive.yml` pings Supabase twice a week (Sunday & Wednesday at 13:17 UTC) to prevent a free-tier project from being paused after 7 days of inactivity.
 
 Set two repository secrets (**Settings → Secrets and variables → Actions**):
 
@@ -239,7 +239,7 @@ Set two repository secrets (**Settings → Secrets and variables → Actions**):
 | `SUPABASE_URL`        | `https://YOUR-PROJECT-REF.supabase.co`         |
 | `SUPABASE_ANON_KEY`   | your anon public key                           |
 
-> The workflow queries `profiles` (`select=id&limit=1`) with the anon key. RLS has no policy for the `anon` role on `profiles`, so the query always returns `[]` (HTTP 200) without exposing any data — a safe activity signal. The anon key cannot read `links` directly (revoked for anti-enumeration), so a table query there would fail.
+> The workflow queries `profiles` (`select=id&limit=1`) with the anon key and a `Prefer: count=exact` header. RLS has no policy for the `anon` role on `profiles`, so the query always returns `[]` (HTTP 200) without exposing any data — a safe activity signal. The `count=exact` header forces PostgREST to run a parallel `SELECT count(*)`, doubling the database activity per call.
 
 Run it manually once from the **Actions** tab to verify (the log should show `Supabase pinged successfully.`).
 
@@ -286,7 +286,7 @@ To make `og:image` / `og:url` absolute (required by some scrapers), set the `SIT
 ## Limitations & Roadmap
 
 - Static redirects happen client-side, so search engines / bots that don't run JavaScript will not follow the redirect.
-- Free-tier Supabase limits apply (500 MB database, project pause after 7 days of inactivity — mitigated by the keep-alive cron).
+- Free-tier Supabase limits apply (500 MB database, project pause after 7 days of inactivity — mitigated by the twice-weekly keep-alive cron).
 - Potential improvements: click analytics dashboard, custom slug editing, custom themes, PWA support.
 
 ## License
