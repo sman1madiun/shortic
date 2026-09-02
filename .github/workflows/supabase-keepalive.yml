@@ -2,9 +2,8 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Twice weekly (Sun & Wed) at 13:17 UTC — well within the 7-day pause
-    # threshold. Odd-minute avoids peak-hour GitHub Actions queuing.
-    - cron: "17 13 * * 0,3"
+    # Daily at 13:17 UTC — odd-minute avoids peak-hour queuing.
+    - cron: "17 13 * * *"
   workflow_dispatch:
 
 permissions:

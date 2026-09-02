@@ -33,7 +33,7 @@
   - UI **flat responsif** dengan toggle **mode gelap**.
 - **Row-level security** — user hanya mengelola link miliknya; admin mengelola semuanya.
 - **Anti-enumerasi** — klien anonim hanya bisa lookup link lewat RPC `SECURITY DEFINER` yang dibatasi, tidak pernah akses tabel langsung.
-- **Keep-alive cron** — workflow GitHub Actions mem-ping Supabase dua kali seminggu (Min & Rab) agar project free-tier tidak ter-pause karena inaktivitas.
+- **Keep-alive cron** — workflow GitHub Actions mem-ping Supabase setiap hari agar project free-tier tidak ter-pause karena inaktivitas.
 
 ## Arsitektur
 
@@ -72,7 +72,7 @@
 - **Frontend:** vanilla HTML/CSS/JS (tanpa framework), [supabase-js v2](https://github.com/supabase/supabase-js), [Materialize CSS](https://materializecss.com/) (di-override menjadi flat), [qrcodejs](https://github.com/davidshimjs/qrcodejs) untuk QR.
 - **Backend / data:** [Supabase](https://supabase.com) (Postgres + Auth + RLS).
 - **Hosting:** Cloudflare Pages (dua project).
-- **CI:** GitHub Actions (keep-alive dua kali seminggu).
+- **CI:** GitHub Actions (keep-alive harian).
 
 ## Struktur Project
 
@@ -230,7 +230,7 @@ Set di **Settings → Environment variables** tiap project:
 
 ## GitHub Actions — Supabase Keep-Alive
 
-Workflow di `.github/workflows/supabase-keepalive.yml` mem-ping Supabase dua kali seminggu (Minggu & Rabu pukul 13:17 UTC) agar project free-tier tidak ter-pause setelah 7 hari inaktivitas.
+Workflow di `.github/workflows/supabase-keepalive.yml` mem-ping Supabase setiap hari pukul 13:17 UTC agar project free-tier tidak ter-pause setelah 7 hari inaktivitas.
 
 Set dua repository secrets (**Settings → Secrets and variables → Actions**):
 
@@ -286,7 +286,7 @@ Supaya `og:image` / `og:url` absolut (diwajibkan sebagian scraper), set environm
 ## Batasan & Roadmap
 
 - Redirect terjadi client-side, jadi search engine / bot yang tidak menjalankan JavaScript tidak akan mengikuti redirect.
-- Limit tier gratis Supabase berlaku (DB 500 MB, project pause setelah 7 hari inaktivitas — dimitigasi oleh cron keep-alive 2× seminggu).
+- Limit tier gratis Supabase berlaku (DB 500 MB, project pause setelah 7 hari inaktivitas — dimitigasi oleh cron keep-alive harian).
 - Ide pengembangan: dashboard analitik klik, edit slug kustom, tema kustom, dukungan PWA.
 
 ## Lisensi
