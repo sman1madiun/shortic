@@ -27,7 +27,7 @@ body {
 }
 
 .shortic-logo {
-  width: min(320px, 82vw);
+  width: min(180px, 82vw);
   height: auto;
   display: block;
   margin: 0 auto 1.5rem;
