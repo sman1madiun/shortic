@@ -85,6 +85,17 @@
 
       <div id="admin-panel" class="hidden">
         <div class="card">
+          <h2>Site Settings</h2>
+          <form id="settings-form">
+            <label for="empty-fragment-url">Redirect when the fragment is empty</label>
+            <input id="empty-fragment-url" type="url" placeholder="https://example.com/page" />
+            <p class="muted">Visitors who open the short domain without a code (e.g. https://short.domain/) are redirected to this URL. Leave it blank and save to keep showing the landing page.</p>
+            <button type="submit" id="settings-save-btn" class="btn">Save Settings</button>
+            <p id="settings-msg" class="msg hidden"></p>
+          </form>
+        </div>
+
+        <div class="card">
           <h2>User Management</h2>
           <div class="table-wrap">
             <table class="table">

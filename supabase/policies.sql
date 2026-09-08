@@ -8,6 +8,7 @@
 alter table public.links enable row level security;
 alter table public.profiles enable row level security;
 alter table public.allowed_emails enable row level security;
+alter table public.settings enable row level security;
 
 -- Anon gets NO direct SELECT on links. Its only access is through the
 -- SECURITY DEFINER functions get_link_by_code / increment_click_count
@@ -87,6 +88,35 @@ create policy "allowed_emails_admin_delete"
   to authenticated
   using (public.is_admin());
 
+-- ---------- settings ----------
+-- Admin-only CRUD, mirroring allowed_emails. The public site reads
+-- whitelisted values through the SECURITY DEFINER get_public_setting()
+-- (defined in schema.sql).
+drop policy if exists "settings_admin_insert" on public.settings;
+create policy "settings_admin_insert"
+  on public.settings for insert
+  to authenticated
+  with check (public.is_admin());
+
+drop policy if exists "settings_admin_select" on public.settings;
+create policy "settings_admin_select"
+  on public.settings for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "settings_admin_update" on public.settings;
+create policy "settings_admin_update"
+  on public.settings for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "settings_admin_delete" on public.settings;
+create policy "settings_admin_delete"
+  on public.settings for delete
+  to authenticated
+  using (public.is_admin());
+
 -- ---------- revoke anon table access (defense in depth) ----------
 -- The anon role must not access links/allowed_emails directly; anon
 -- access to links is only via the SECURITY DEFINER functions above.
@@ -94,3 +124,4 @@ create policy "allowed_emails_admin_delete"
 -- already restricts it (the admin dashboard needs CRUD via authenticated).
 revoke all on table public.links from anon;
 revoke all on table public.allowed_emails from anon;
+revoke all on table public.settings from anon;

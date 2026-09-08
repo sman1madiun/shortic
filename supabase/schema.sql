@@ -47,6 +47,15 @@ create table if not exists public.allowed_emails (
   added_at timestamptz not null default now()
 );
 
+-- ---------- Table: settings (site-wide key/value) ----------
+create table if not exists public.settings (
+  key        text primary key,
+  value      text not null,
+  updated_at timestamptz not null default now()
+);
+
+comment on table public.settings is 'Site-wide settings. Writes are admin-only (RLS); anon can only read whitelisted keys via get_public_setting().';
+
 -- ---------- Trigger: enforce allowlist on signup ----------
 -- Runs for every insert into auth.users (new Google OAuth signup).
 -- If the email is not in the allowlist, the user row is deleted so
@@ -121,6 +130,24 @@ as $$
 $$;
 
 grant execute on function public.increment_click_count(text) to anon, authenticated;
+
+-- ---------- RPC: get_public_setting ----------
+-- The only way an anon client reads a settings value. Returns NULL for
+-- keys that are not whitelisted here, so admin-only settings stay private.
+create or replace function public.get_public_setting(p_key text)
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select s.value
+    from public.settings s
+   where s.key = p_key
+     and s.key in ('empty_fragment_redirect_url')
+$$;
+
+grant execute on function public.get_public_setting(text) to anon, authenticated;
 
 -- ---------- RPC: sync_profile_for_current_user ----------
 -- Called by the admin panel after login. Creates/syncs the profiles row

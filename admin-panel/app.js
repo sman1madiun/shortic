@@ -1,5 +1,6 @@
 const CODE_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
 const CODE_LENGTH = 6;
+const EMPTY_FRAGMENT_KEY = "empty_fragment_redirect_url";
 
 function randomCode(length = CODE_LENGTH) {
   let out = "";
@@ -298,6 +299,20 @@ async function loadAllowlist() {
   }
 }
 
+async function loadEmptyFragmentSetting() {
+  const { data, error } = await sb
+    .from("settings")
+    .select("value")
+    .eq("key", EMPTY_FRAGMENT_KEY)
+    .maybeSingle();
+
+  if (error) {
+    console.error("loadEmptyFragmentSetting error:", error.message);
+    return;
+  }
+  el("empty-fragment-url").value = data ? data.value : "";
+}
+
 async function initDashboard() {
   if (!window.APP_USER) return;
 
@@ -484,6 +499,52 @@ async function initDashboard() {
       await loadProfiles();
     });
 
+    el("settings-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const raw = el("empty-fragment-url").value.trim();
+      const msg = el("settings-msg");
+      const saveBtn = el("settings-save-btn");
+      msg.classList.add("hidden");
+      saveBtn.disabled = true;
+      saveBtn.classList.add("btn-loading");
+      try {
+        if (raw) {
+          if (!isValidHttpUrl(raw)) {
+            msg.textContent = "URL must start with http:// or https://";
+            msg.classList.add("text-danger");
+          } else {
+            const { error } = await sb
+              .from("settings")
+              .upsert(
+                { key: EMPTY_FRAGMENT_KEY, value: raw, updated_at: new Date().toISOString() },
+                { onConflict: "key" }
+              );
+            if (error) {
+              msg.textContent = "Failed to save: " + error.message;
+              msg.classList.add("text-danger");
+            } else {
+              msg.textContent = "Redirect saved. Empty fragments now go to " + raw;
+              msg.classList.add("text-success");
+            }
+          }
+        } else {
+          const { error } = await sb.from("settings").delete().eq("key", EMPTY_FRAGMENT_KEY);
+          if (error) {
+            msg.textContent = "Failed to clear: " + error.message;
+            msg.classList.add("text-danger");
+          } else {
+            msg.textContent = "Redirect cleared. Empty fragments show the landing page.";
+            msg.classList.add("text-success");
+          }
+        }
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("btn-loading");
+      }
+      msg.classList.remove("hidden");
+    });
+
+    await loadEmptyFragmentSetting();
     await loadProfiles();
     await loadAllowlist();
   }

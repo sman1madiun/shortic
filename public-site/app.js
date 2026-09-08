@@ -16,6 +16,19 @@ async function resolveCode(code) {
   return data && data.length > 0 ? data[0] : null;
 }
 
+// Admin-configurable target for visits with an empty fragment (e.g. the
+// bare short domain). Returns null when no redirect is set.
+async function resolveEmptyFragmentRedirect() {
+  const { data, error } = await sb.rpc("get_public_setting", {
+    p_key: "empty_fragment_redirect_url",
+  });
+  if (error) {
+    console.error("Settings lookup error:", error.message);
+    return null;
+  }
+  return typeof data === "string" && data.trim() ? data.trim() : null;
+}
+
 function isValidTarget(url) {
   try {
     const parsed = new URL(url);
@@ -27,7 +40,16 @@ function isValidTarget(url) {
 
 async function init() {
   const code = getCodeFromHash();
-  if (!code) return;
+
+  // Empty fragment (bare short domain): honor the admin-configured
+  // redirect, otherwise stay on the landing page.
+  if (!code) {
+    const redirectUrl = await resolveEmptyFragmentRedirect();
+    if (redirectUrl && isValidTarget(redirectUrl)) {
+      window.location.replace(redirectUrl);
+    }
+    return;
+  }
 
   const link = await resolveCode(code);
   if (!link) return;
